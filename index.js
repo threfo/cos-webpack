@@ -48,9 +48,15 @@ module.exports = class CosPlugin {
             let basePath = path.basename(compiler.outputPath);
             let assets = compilation.assets;
             let hash = compilation.hash;
+
             let uploadPath = this.options.path || '[hash]';
-            let exclude = isRegExp(this.options.exclude) && this.options.exclude;
-            let include = isRegExp(this.options.include) && this.options.include;
+            let op_exclude = this.options.exclude || [];
+            let exclude = []
+            op_exclude.forEach(item => {
+                if (isRegExp(item)) {
+                    exclude.push(item)
+                }
+            });
             let batch = this.options.batch || 20;
             let cos = new COS({
                 SecretId: this.options.secretId,
@@ -80,13 +86,22 @@ module.exports = class CosPlugin {
                 if (!file.emitted) return false;
 
                 // Check excluced files
-                if (exclude && exclude.test(fileName)) return false;
+                let ignore = false
+                exclude.forEach( item => {
+                    if (item.test(fileName)) {
+                        console.log('Ignore file: ' + fileName)
+                        ignore = true;
+                    }
+                })
 
-                // Check included files
-                if (include) return include.test(fileName);
+                if (ignore) {
+                    return false;
+                }
 
                 return true;
             });
+
+            // console.log(filesNames)
 
             totalFiles = filesNames.length;
 
@@ -100,9 +115,7 @@ module.exports = class CosPlugin {
             // Perform upload to cos
             const performUpload = function (fileName) {
                 let file = assets[fileName] || {};
-                fileName = basePath + '/' + fileName;
                 let key = path.posix.join(uploadPath, fileName);
-
                 return new Promise((resolve, reject) => {
                     let begin = Date.now();
                     cos.sliceUploadFile({
