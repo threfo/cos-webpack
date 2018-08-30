@@ -16,7 +16,7 @@ const tip = (uploaded, total) => {
 
 // Replace path variable by hash with length
 const withHashLength = (replacer) => {
-    return function (_, hashLength) {
+    return function(_, hashLength) {
         const length = hashLength && parseInt(hashLength, 10);
         const hash = replacer.apply(this, arguments);
         return length ? hash.slice(0, length) : hash;
@@ -25,7 +25,7 @@ const withHashLength = (replacer) => {
 
 // Perform hash replacement
 const getReplacer = (value, allowEmpty) => {
-    return function (match) {
+    return function(match) {
         // last argument in replacer is the entire input string
         const input = arguments[arguments.length - 1];
         if (value === null || value === undefined) {
@@ -87,7 +87,7 @@ module.exports = class CosPlugin {
 
                 // Check excluced files
                 let ignore = false
-                exclude.forEach( item => {
+                exclude.forEach(item => {
                     if (item.test(fileName)) {
                         console.log('Ignore file: ' + fileName)
                         ignore = true;
@@ -101,7 +101,7 @@ module.exports = class CosPlugin {
                 return true;
             });
 
-            // console.log(filesNames)
+            console.log(filesNames)
 
             totalFiles = filesNames.length;
 
@@ -113,9 +113,10 @@ module.exports = class CosPlugin {
             }).start();
 
             // Perform upload to cos
-            const performUpload = function (fileName) {
+            const performUpload = function(fileName) {
                 let file = assets[fileName] || {};
                 let key = path.posix.join(uploadPath, fileName);
+                console.log(key);
                 return new Promise((resolve, reject) => {
                     let begin = Date.now();
                     cos.sliceUploadFile({
@@ -123,7 +124,7 @@ module.exports = class CosPlugin {
                         Region: region,
                         Key: key,
                         FilePath: file.existsAt
-                    }, function (err, body) {
+                    }, function(err, body) {
                         uploadedFiles++;
                         spinner.text = tip(uploadedFiles, totalFiles);
 
@@ -135,7 +136,7 @@ module.exports = class CosPlugin {
             };
 
             // Execute stack according to `batch` option
-            const execStack = function (err) {
+            const execStack = function(err) {
                 if (err) {
                     // eslint-disable-next-line no-console
                     console.log('\n');
